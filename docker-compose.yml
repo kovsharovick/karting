@@ -1,0 +1,67 @@
+services:
+  db:
+    build:
+      context: ./database
+      dockerfile: Dockerfile
+    container_name: apex-karting-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - karting_pgdata:/var/lib/postgresql/data
+    networks:
+      - karting_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  backend:
+    build: .
+    container_name: apex-karting-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}    # используем переменную из .env
+      JWT_SECRET: ${JWT_SECRET}
+      SERVER_PORT: 8080
+      SPRING_PROFILES_ACTIVE: default      # изменено с test на default
+    ports:
+      - "${BACKEND_PORT}:8080"
+    networks:
+      - karting_net
+
+  adminer:
+    image: adminer:4
+    container_name: apex-karting-adminer
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${ADMINER_PORT}:8080"
+    networks:
+      - karting_net
+    profiles:
+      - tools
+
+volumes:
+  karting_pgdata:
+    name: apex_karting_pgdata
+
+networks:
+  karting_net:
+    name: apex_karting_net

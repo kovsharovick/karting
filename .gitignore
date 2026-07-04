@@ -1,6 +1,13 @@
 .claude
 
-# Секреты доступа (токен Figma и пр.) — никогда не коммитим
+target/
+*.jar
+*.war
+*.log
+.idea/
+*.iml
+.vscode/
+*.class
+application-local.yml
 .env
-.env.*
 

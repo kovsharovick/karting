@@ -1,6 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <!DOCTYPE html>
 <html>
@@ -74,16 +73,14 @@
                              onclick="location.href = '${pageContext.request.contextPath}/slots/${slot.id}'">
                             <div class="flex justify-between items-start">
                                 <div>
-                                    <p class="font-medium">
-                                        <fmt:formatDate value="${slot.startAt.toGregorianCalendar().time}" pattern="dd MMM, HH:mm"/>
-                                    </p>
+                                    <p class="font-medium">${slot.startAtFormatted}</p>
                                     <p class="text-sm text-gray-600">${slot.trackConfig.name}</p>
-                                    <p class="text-sm">${slot.marshal.name} ★ <fmt:formatNumber value="${slot.marshal.ratingAvg}" pattern="#0.0"/></p>
+                                    <p class="text-sm">${slot.marshal.name} ★ ${slot.marshal.ratingAvg}</p>
                                 </div>
                                 <div class="text-right">
                                     <p class="font-bold text-lg">${slot.priceKart} ₽</p>
                                     <p class="text-sm ${slot.freeKarts > 0 ? 'text-green-600' : 'text-red-500'}">
-                                        ${slot.freeKarts > 0 ? 'Свободно ' .concat(slot.freeKarts).concat(' из ').concat(slot.totalKarts) : 'Мест нет'}
+                                        ${slot.freeKarts > 0 ? 'Свободно '.concat(slot.freeKarts).concat(' из ').concat(slot.totalKarts) : 'Мест нет'}
                                     </p>
                                 </div>
                             </div>

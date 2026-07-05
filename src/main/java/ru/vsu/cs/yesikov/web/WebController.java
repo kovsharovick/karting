@@ -4,6 +4,7 @@ package ru.vsu.cs.yesikov.web;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -22,6 +23,7 @@ import ru.vsu.cs.yesikov.service.SlotService;
 import ru.vsu.cs.yesikov.web.dto.BookingForm;
 import ru.vsu.cs.yesikov.web.dto.LoginForm;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -97,8 +99,8 @@ public class WebController {
     // ===== СЛОТЫ (без изменений) =====
 
     @GetMapping("/slots")
-    public String slotList(@RequestParam(required = false) OffsetDateTime dateFrom,
-                           @RequestParam(required = false) OffsetDateTime dateTo,
+    public String slotList(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
+                           @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo,
                            @RequestParam(required = false) List<TrackConfigType> trackConfig,
                            @RequestParam(required = false) List<UUID> instructorId,
                            @RequestParam(required = false) Boolean onlyAvailable,

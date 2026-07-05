@@ -1,6 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <!DOCTYPE html>
 <html>
 <head>
@@ -44,9 +43,7 @@
                                             <c:when test="${b.status == 'center_cancelled'}">Отменён центром</c:when>
                                         </c:choose>
                                     </span>
-                                    <p class="font-medium">
-                                        <fmt:formatDate value="${b.slot.startAt.toGregorianCalendar().time}" pattern="dd MMM, HH:mm"/>
-                                    </p>
+                                    <p class="font-medium">${b.slot.startAtFormatted}</p>
                                     <p class="text-sm text-gray-600">${b.slot.trackConfig.name} · ${b.slot.marshal.name}</p>
                                     <p class="text-sm">${b.seatsCount} места
                                         <c:if test="${b.rentalGearCount > 0}">, прокат: ${b.rentalGearCount}</c:if>

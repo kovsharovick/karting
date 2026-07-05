@@ -1,12 +1,14 @@
 package ru.vsu.cs.yesikov.service;
 
 import lombok.RequiredArgsConstructor;
+import org.hibernate.Hibernate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.vsu.cs.yesikov.dto.MarshalDto;
 import ru.vsu.cs.yesikov.dto.TrackConfigurationDto;
 import ru.vsu.cs.yesikov.dto.common.PaginationMeta;
@@ -19,29 +21,44 @@ import ru.vsu.cs.yesikov.model.enums.SlotStatus;
 import ru.vsu.cs.yesikov.model.enums.TrackConfigType;
 import ru.vsu.cs.yesikov.repository.SlotRepository;
 
+
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 
 @Service
 @RequiredArgsConstructor
 public class SlotService {
 
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd MMM, HH:mm");
+
     private final SlotRepository slotRepository;
 
-    public SlotListResponse listSlots(OffsetDateTime dateFrom, OffsetDateTime dateTo,
+    @Transactional(readOnly = true)
+    public SlotListResponse listSlots(LocalDate dateFrom, LocalDate dateTo,
                                       List<TrackConfigType> trackConfigs,
                                       List<UUID> instructorIds,
                                       Boolean onlyAvailable,
                                       Integer limit, Integer offset) {
-        if (dateFrom == null) dateFrom = OffsetDateTime.now();
-        if (dateTo == null) dateTo = dateFrom.plusDays(7);
+        // Если дата не указана – по умолчанию сегодня
+        if (dateFrom == null) {
+            dateFrom = LocalDate.now();
+        }
+        if (dateTo == null) {
+            dateTo = dateFrom.plusDays(7);
+        }
 
-        OffsetDateTime finalDateFrom = dateFrom;
-        OffsetDateTime finalDateTo = dateTo;
+        // Преобразуем LocalDate в OffsetDateTime (UTC)
+        OffsetDateTime from = dateFrom.atStartOfDay(ZoneOffset.UTC).toOffsetDateTime();
+        OffsetDateTime to = dateTo.atTime(23, 59, 59, 999_999_999).atOffset(ZoneOffset.UTC);
+
+        // Далее используем from и to как раньше
         Specification<Slot> spec = Specification.where((root, query, cb) ->
-                cb.between(root.get("startAt"), finalDateFrom, finalDateTo)
+                cb.between(root.get("startAt"), from, to)
         );
 
         if (trackConfigs != null && !trackConfigs.isEmpty()) {
@@ -66,6 +83,12 @@ public class SlotService {
         Pageable pageable = PageRequest.of(offset / limit, limit);
         Page<Slot> page = slotRepository.findAll(spec, pageable);
 
+        // Инициализация ленивых полей
+        page.getContent().forEach(slot -> {
+            Hibernate.initialize(slot.getTrackConfig());
+            Hibernate.initialize(slot.getMarshal());
+        });
+
         List<SlotSummaryResponse> items = page.getContent().stream()
                 .map(this::toSummary)
                 .collect(Collectors.toList());
@@ -74,13 +97,15 @@ public class SlotService {
         return new SlotListResponse(items, meta);
     }
 
+    @Transactional(readOnly = true)
     public SlotResponse getSlot(UUID slotId) {
         Slot slot = slotRepository.findById(slotId)
                 .orElseThrow(() -> new BusinessException("Slot not found", HttpStatus.NOT_FOUND, "not_found"));
+        Hibernate.initialize(slot.getTrackConfig());
+        Hibernate.initialize(slot.getMarshal());
         return toFullResponse(slot);
     }
 
-    // Сделал public, чтобы был доступен из BookingService
     public SlotSummaryResponse toSummary(Slot slot) {
         return new SlotSummaryResponse(
                 slot.getId(),
@@ -88,6 +113,7 @@ public class SlotService {
                         slot.getTrackConfig().getType(), slot.getTrackConfig().getDescription()),
                 new MarshalDto(slot.getMarshal().getId(), slot.getMarshal().getName(), slot.getMarshal().getRatingAvg()),
                 slot.getStartAt(),
+                slot.getStartAt().format(DATE_FORMATTER),   // форматированная строка
                 slot.getTotalKarts(),
                 slot.getFreeKarts(),
                 slot.getFreeRentalGear(),
@@ -107,6 +133,7 @@ public class SlotService {
                         slot.getTrackConfig().getType(), slot.getTrackConfig().getDescription()),
                 new MarshalDto(slot.getMarshal().getId(), slot.getMarshal().getName(), slot.getMarshal().getRatingAvg()),
                 slot.getStartAt(),
+                slot.getStartAt().format(DATE_FORMATTER),   // форматированная строка
                 slot.getTotalKarts(),
                 slot.getFreeKarts(),
                 slot.getFreeRentalGear(),

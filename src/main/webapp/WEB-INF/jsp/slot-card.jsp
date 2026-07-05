@@ -1,6 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <!DOCTYPE html>
 <html>
 <head>
@@ -18,11 +17,9 @@
         <c:choose>
             <c:when test="${not empty slot}">
                 <div class="bg-white rounded-lg shadow p-6 space-y-4">
-                    <h2 class="text-2xl font-bold">
-                        <fmt:formatDate value="${slot.startAt.toGregorianCalendar().time}" pattern="dd MMM yyyy, HH:mm"/>
-                    </h2>
+                    <h2 class="text-2xl font-bold">${slot.startAtFormatted}</h2>
                     <p class="text-lg">${slot.trackConfig.name}</p>
-                    <p>Маршал: ${slot.marshal.name} ★ <fmt:formatNumber value="${slot.marshal.ratingAvg}" pattern="#0.0"/></p>
+                    <p>Маршал: ${slot.marshal.name} ★ ${slot.marshal.ratingAvg}</p>
                     <c:if test="${not empty slot.requirementsText}">
                         <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 text-sm">
                             ⚠️ ${slot.requirementsText}

@@ -39,9 +39,7 @@
                         </c:if>
                     </div>
 
-                    <p class="text-2xl font-bold">
-                        <fmt:formatDate value="${booking.slot.startAt.toGregorianCalendar().time}" pattern="dd MMM yyyy, HH:mm"/>
-                    </p>
+                    <p class="text-2xl font-bold">${booking.slot.startAtFormatted}</p>
                     <p>${booking.slot.trackConfig.name} · ${booking.slot.marshal.name}</p>
                     <p>${booking.seatsCount} места
                         <c:if test="${booking.rentalGearCount > 0}">, прокат: ${booking.rentalGearCount}</c:if>
@@ -140,8 +138,7 @@
         }
 
         function confirmCancel() {
-            // ИСПРАВЛЕНО: добавлен префикс /web
-            axios.post('/web/bookings/' + currentBookingId + '/cancel?confirm=true')
+            axios.post('${pageContext.request.contextPath}/web/bookings/' + currentBookingId + '/cancel?confirm=true')
                 .then(() => {
                     location.reload();
                 })
@@ -177,8 +174,7 @@
         function submitRating() {
             if (selectedRating === 0) return;
             const comment = document.getElementById('ratingComment').value;
-            // ИСПРАВЛЕНО: добавлен префикс /web
-            axios.post('/web/ratings', {
+            axios.post('${pageContext.request.contextPath}/web/ratings', {
                 marshalId: currentMarshalId,
                 bookingId: currentBookingId,
                 value: selectedRating,

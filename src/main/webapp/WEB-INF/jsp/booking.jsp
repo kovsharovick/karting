@@ -1,6 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 <!DOCTYPE html>
 <html>
@@ -20,7 +19,7 @@
             <c:when test="${not empty slot}">
                 <div class="bg-white rounded-lg shadow p-6">
                     <div class="bg-gray-50 p-3 rounded mb-4">
-                        <p>${slot.trackConfig.name} · <fmt:formatDate value="${slot.startAt.toGregorianCalendar().time}" pattern="dd MMM, HH:mm"/></p>
+                        <p>${slot.trackConfig.name} · ${slot.startAtFormatted}</p>
                         <p>Маршал: ${slot.marshal.name}</p>
                     </div>
 

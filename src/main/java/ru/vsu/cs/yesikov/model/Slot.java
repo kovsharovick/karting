@@ -40,14 +40,14 @@ public class Slot {
     @Column(name = "total_karts", nullable = false)
     private Short totalKarts;
 
-    @Column(name = "free_karts", nullable = false, insertable = false, updatable = false)
+    @Column(name = "free_karts", nullable = false)
     private Short freeKarts;
 
     @Column(name = "total_rental_gear", nullable = false)
     @Builder.Default
     private Short totalRentalGear = 0;
 
-    @Column(name = "free_rental_gear", nullable = false, insertable = false, updatable = false)
+    @Column(name = "free_rental_gear", nullable = false)
     private Short freeRentalGear;
 
     @Column(name = "price_kart", nullable = false)

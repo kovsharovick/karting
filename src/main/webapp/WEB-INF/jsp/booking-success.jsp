@@ -1,6 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <!DOCTYPE html>
 <html>
 <head>
@@ -13,8 +12,7 @@
         <div class="text-green-500 text-5xl mb-4">✓</div>
         <h1 class="text-2xl font-bold mb-2">Вы записаны!</h1>
         <p class="text-gray-600 mb-4">
-            <fmt:formatDate value="${booking.slot.startAt.toGregorianCalendar().time}" pattern="dd MMM, HH:mm"/> ·
-            ${booking.slot.trackConfig.name}
+            ${booking.slot.startAtFormatted} · ${booking.slot.trackConfig.name}
         </p>
         <p class="text-sm">
             Маршал: ${booking.slot.marshal.name} ·

@@ -84,7 +84,7 @@ public class AuthService {
         }
         // ---- Конец тестового режима ----
 
-        OtpCode otp = otpCodeRepository.findActiveByPhoneAndPurpose(phone, OtpPurpose.login, OffsetDateTime.now())
+        OtpCode otp = otpCodeRepository.findTopByPhoneAndPurposeAndConsumedAtIsNullOrderByCreatedAtDesc(phone, OtpPurpose.login)
                 .orElseThrow(() -> new BusinessException("Неверный код или истёк срок", HttpStatus.BAD_REQUEST, "invalid_code"));
 
         if (!passwordEncoder.matches(code, otp.getCodeHash())) {

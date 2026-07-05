@@ -16,6 +16,7 @@ public class SlotSummaryResponse {
     private TrackConfigurationDto trackConfig;
     private MarshalDto marshal;
     private OffsetDateTime startAt;
+    private String startAtFormatted;  // <-- новое поле
     private Short totalKarts;
     private Short freeKarts;
     private Short freeRentalGear;

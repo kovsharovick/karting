@@ -55,6 +55,9 @@ spring:
   task:
     scheduling:
       enabled: false
+  security:
+    basic:
+      enabled: false   # отключаем базовую аутентификацию для dev, чтобы не мешала ручной сессионной авторизации
 
 ---
 # Профиль для продакшена/по умолчанию (PostgreSQL)
@@ -72,3 +75,6 @@ spring:
       ddl-auto: validate
   flyway:
     enabled: true
+  security:
+    basic:
+      enabled: false   # также отключаем для production, если используется ручная авторизация

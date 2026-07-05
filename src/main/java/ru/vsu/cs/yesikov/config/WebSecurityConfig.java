@@ -28,29 +28,24 @@ public class WebSecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                new AntPathRequestMatcher("/api/auth/**"),
-                                new AntPathRequestMatcher("/login"),
-                                new AntPathRequestMatcher("/request-code"),
-                                new AntPathRequestMatcher("/verify-code"),
-                                new AntPathRequestMatcher("/static/**"),
+                        // API-эндпоинты для регистрации/входа – открыты
+                        .requestMatchers(new AntPathRequestMatcher("/api/auth/**")).permitAll()
+                        // Статические ресурсы – открыты
+                        .requestMatchers(new AntPathRequestMatcher("/static/**"),
                                 new AntPathRequestMatcher("/webjars/**"),
-                                new AntPathRequestMatcher("/h2-console/**")
-                        ).permitAll()
+                                new AntPathRequestMatcher("/h2-console/**")).permitAll()
+                        // Все API-запросы (кроме /api/auth/…) требуют JWT
                         .requestMatchers(new AntPathRequestMatcher("/api/**")).authenticated()
-                        .anyRequest().authenticated()
+                        // ВСЕ ОСТАЛЬНЫЕ страницы (JSP) – свободны, проверка вручную в WebController
+                        .anyRequest().permitAll()
                 )
-                .formLogin(form -> form
-                        .loginPage("/login")
-                        .defaultSuccessUrl("/slots")
-                        .permitAll()
-                )
-                .logout(logout -> logout
-                        .logoutUrl("/logout")
-                        .logoutSuccessUrl("/login")
-                        .permitAll()
-                )
+                // Отключаем стандартный formLogin (он нам не нужен, логин ручной)
+                .formLogin(form -> form.disable())
+                // Отключаем logout по умолчанию (тоже ручной)
+                .logout(logout -> logout.disable())
+                // Сессии создаются по необходимости (для JSP)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                // JWT-фильтр – только для /api, но он пропускает запросы без заголовка Authorization
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .csrf(csrf -> csrf.disable());
 

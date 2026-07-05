@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,6 +51,10 @@ public class BookingService {
     private final IdempotencyKeyRepository idempotencyKeyRepository;
     private final SlotService slotService;
 
+    @Value("${spring.profiles.active:}")
+    private String activeProfile;
+
+
     public BookingResponse createBooking(UUID clientId, CreateBookingRequest request, UUID idempotencyKey) {
         String fingerprint = buildFingerprint(request);
 
@@ -89,7 +94,7 @@ public class BookingService {
         Client client = clientRepository.findById(clientId)
                 .orElseThrow(() -> new BusinessException("Client not found", HttpStatus.NOT_FOUND, "not_found"));
 
-        Slot slot = slotRepository.findById(request.getSlotId())
+        Slot slot = slotRepository.findByIdForUpdate(request.getSlotId())
                 .orElseThrow(() -> new BusinessException("Slot not found", HttpStatus.NOT_FOUND, "not_found"));
 
         if (slot.getStatus() == SlotStatus.cancelled) {
@@ -134,6 +139,12 @@ public class BookingService {
                     "gear_unavailable",
                     Map.of("free_rental_gear", slot.getFreeRentalGear())
             );
+        }
+
+        boolean managesInventoryInApplication = managesInventoryInApplication();
+        if (managesInventoryInApplication) {
+            slot.setFreeKarts((short) (slot.getFreeKarts() - request.getSeatsCount()));
+            slot.setFreeRentalGear((short) (slot.getFreeRentalGear() - request.getRentalGearCount()));
         }
 
         int priceTotal = slot.getPriceKart() * request.getSeatsCount() +
@@ -195,6 +206,12 @@ public class BookingService {
         booking.setStatus(newStatus);
         booking.setCancelledAt(now);
 
+        if (managesInventoryInApplication()) {
+            Slot slot = booking.getSlot();
+            slot.setFreeKarts((short) (slot.getFreeKarts() + booking.getSeatsCount()));
+            slot.setFreeRentalGear((short) (slot.getFreeRentalGear() + booking.getRentalGearCount()));
+        }
+
         Booking updated;
         try {
             updated = bookingRepository.save(booking);
@@ -239,6 +256,10 @@ public class BookingService {
     }
 
     // ---- Вспомогательные методы ----
+
+    private boolean managesInventoryInApplication() {
+        return activeProfile == null || activeProfile.isBlank() || activeProfile.contains("dev") || activeProfile.contains("test");
+    }
 
     private String buildFingerprint(CreateBookingRequest request) {
         return request.getSlotId() + ":" + request.getSeatsCount() + ":" + request.getRentalGearCount();

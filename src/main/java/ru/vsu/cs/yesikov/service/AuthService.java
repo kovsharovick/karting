@@ -41,14 +41,17 @@ public class AuthService {
     private String activeProfile;
 
     public void requestCode(String phone) {
+        OffsetDateTime now = OffsetDateTime.now();
+        otpCodeRepository.consumeActiveByPhoneAndPurpose(phone, OtpPurpose.login, now);
+
         String code = String.format("%04d", (int) (Math.random() * 10000));
         String hash = passwordEncoder.encode(code);
         OtpCode otp = OtpCode.builder()
                 .phone(phone)
                 .purpose(OtpPurpose.login)
                 .codeHash(hash)
-                .expiresAt(OffsetDateTime.now().plusMinutes(5))
-                .resendAfter(OffsetDateTime.now().plusSeconds(60))
+                .expiresAt(now.plusMinutes(5))
+                .resendAfter(now.plusSeconds(60))
                 .build();
         otpCodeRepository.save(otp);
         log.info("OTP for {}: {}", phone, code);
@@ -84,7 +87,8 @@ public class AuthService {
         }
         // ---- Конец тестового режима ----
 
-        OtpCode otp = otpCodeRepository.findTopByPhoneAndPurposeAndConsumedAtIsNullOrderByCreatedAtDesc(phone, OtpPurpose.login)
+        OffsetDateTime now = OffsetDateTime.now();
+        OtpCode otp = otpCodeRepository.findTopActiveByPhoneAndPurpose(phone, OtpPurpose.login, now)
                 .orElseThrow(() -> new BusinessException("Неверный код или истёк срок", HttpStatus.BAD_REQUEST, "invalid_code"));
 
         if (!passwordEncoder.matches(code, otp.getCodeHash())) {
@@ -93,7 +97,7 @@ public class AuthService {
             throw new BusinessException("Неверный код. Проверьте и введите ещё раз", HttpStatus.BAD_REQUEST, "invalid_code");
         }
 
-        otp.setConsumedAt(OffsetDateTime.now());
+        otp.setConsumedAt(now);
         otpCodeRepository.save(otp);
 
         Client client = clientRepository.findByPhone(phone)

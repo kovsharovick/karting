@@ -26,9 +26,16 @@ public interface OtpCodeRepository extends JpaRepository<OtpCode, UUID> {
     @Query("SELECT o FROM OtpCode o WHERE o.phone = :phone AND o.consumedAt IS NULL")
     List<OtpCode> findAllActiveByPhone(@Param("phone") String phone);
 
-    @Query("SELECT o FROM OtpCode o WHERE o.phone = :phone AND o.purpose = :purpose AND o.consumedAt IS NULL ORDER BY o.createdAt DESC")
-    Optional<OtpCode> findTopByPhoneAndPurposeAndConsumedAtIsNullOrderByCreatedAtDesc(
+    @Modifying
+    @Query("UPDATE OtpCode o SET o.consumedAt = :now WHERE o.phone = :phone AND o.purpose = :purpose AND o.consumedAt IS NULL")
+    int consumeActiveByPhoneAndPurpose(@Param("phone") String phone,
+                                       @Param("purpose") OtpPurpose purpose,
+                                       @Param("now") OffsetDateTime now);
+
+    @Query("SELECT o FROM OtpCode o WHERE o.phone = :phone AND o.purpose = :purpose AND o.consumedAt IS NULL AND o.expiresAt > :now ORDER BY o.createdAt DESC")
+    Optional<OtpCode> findTopActiveByPhoneAndPurpose(
             @Param("phone") String phone,
-            @Param("purpose") OtpPurpose purpose
+            @Param("purpose") OtpPurpose purpose,
+            @Param("now") OffsetDateTime now
     );
 }

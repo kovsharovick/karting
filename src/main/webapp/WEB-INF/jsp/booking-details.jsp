@@ -39,8 +39,8 @@
                         </c:if>
                     </div>
 
-                    <p class="text-2xl font-bold">${booking.slot.startAtFormatted}</p>
-                    <p>${booking.slot.trackConfig.name} · ${booking.slot.marshal.name}</p>
+                    <p class="text-2xl font-bold">${not empty booking.slot ? booking.slot.startAtFormatted : 'Информация о заезде недоступна'}</p>
+                    <p>${not empty booking.slot ? booking.slot.trackConfig.name : '—'} · ${not empty booking.slot ? booking.slot.marshal.name : '—'}</p>
                     <p>${booking.seatsCount} места
                         <c:if test="${booking.rentalGearCount > 0}">, прокат: ${booking.rentalGearCount}</c:if>
                     </p>
@@ -58,7 +58,7 @@
                     <c:if test="${booking.status == 'active'}">
                         <!-- Отмена, если не начался -->
                         <c:choose>
-                            <c:when test="${booking.slot.startAt.isAfter(now)}">
+                            <c:when test="${canCancel}">
                                 <button onclick="showCancelModal()" class="w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-700">
                                     Отменить
                                 </button>
@@ -71,7 +71,7 @@
                         </c:choose>
 
                         <!-- Оценка, если завершён -->
-                        <c:if test="${booking.slot.startAt.plusMinutes(booking.slot.durationMinutes).isBefore(now) and empty booking.rating}">
+                        <c:if test="${canRate}">
                             <button onclick="showRatingModal()" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 mt-2">
                                 Оценить маршала
                             </button>
@@ -112,7 +112,7 @@
     <!-- Модалка оценки -->
     <div id="ratingModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
         <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-            <h2 class="text-xl font-bold mb-4">Оцените маршала ${booking.slot.marshal.name}</h2>
+            <h2 class="text-xl font-bold mb-4">Оцените маршала ${not empty booking.slot ? booking.slot.marshal.name : ''}</h2>
             <div class="flex gap-1 text-3xl justify-center" id="ratingStars">
                 <span class="cursor-pointer" onclick="setRating(1)">☆</span>
                 <span class="cursor-pointer" onclick="setRating(2)">☆</span>
@@ -131,7 +131,7 @@
     <script>
         let selectedRating = 0;
         let currentBookingId = '${booking.id}';
-        let currentMarshalId = '${booking.slot.marshal.id}';
+        let currentMarshalId = '${not empty booking.slot ? booking.slot.marshal.id : ''}';
 
         function showCancelModal() {
             document.getElementById('cancelModal').classList.remove('hidden');

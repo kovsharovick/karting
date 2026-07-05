@@ -206,7 +206,21 @@ public class WebController {
         }
         UUID clientId = (UUID) session.getAttribute("clientId");
         BookingResponse booking = bookingService.getBooking(bookingId, clientId);
+        OffsetDateTime now = OffsetDateTime.now();
+        boolean canCancel = booking.getStatus() == BookingStatus.active
+                && booking.getSlot() != null
+                && booking.getSlot().getStartAt() != null
+                && booking.getSlot().getStartAt().isAfter(now);
+        boolean canRate = booking.getStatus() == BookingStatus.active
+                && booking.getRating() == null
+                && booking.getSlot() != null
+                && booking.getSlot().getStartAt() != null
+                && booking.getSlot().getDurationMinutes() != null
+                && booking.getSlot().getStartAt().plusMinutes(booking.getSlot().getDurationMinutes()).isBefore(now);
+
         model.addAttribute("booking", booking);
+        model.addAttribute("canCancel", canCancel);
+        model.addAttribute("canRate", canRate);
         return "booking-details";
     }
 

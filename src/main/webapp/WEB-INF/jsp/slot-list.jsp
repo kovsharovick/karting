@@ -16,6 +16,7 @@
     <header class="bg-white shadow-sm py-3 px-4 flex justify-between items-center sticky top-0 z-10">
         <h1 class="text-xl font-bold text-blue-600">Апекс</h1>
         <div class="flex items-center gap-3">
+            <a href="${pageContext.request.contextPath}/bookings" class="text-sm text-gray-700 hover:text-blue-600">Мои брони</a>
             <span class="text-sm text-gray-600">
                 ${sessionScope.client.name != null ? sessionScope.client.name : sessionScope.client.phone}
             </span>
@@ -39,11 +40,11 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-sm font-medium">С</label>
-                        <input type="date" name="dateFrom" value="${filterDateFrom != null ? filterDateFrom.toLocalDate() : ''}" class="w-full border rounded px-2 py-1">
+                        <input type="date" name="dateFrom" value="${filterDateFrom != null ? filterDateFrom : ''}" class="w-full border rounded px-2 py-1">
                     </div>
                     <div>
                         <label class="block text-sm font-medium">По</label>
-                        <input type="date" name="dateTo" value="${filterDateTo != null ? filterDateTo.toLocalDate() : ''}" class="w-full border rounded px-2 py-1">
+                        <input type="date" name="dateTo" value="${filterDateTo != null ? filterDateTo : ''}" class="w-full border rounded px-2 py-1">
                     </div>
                 </div>
                 <div>

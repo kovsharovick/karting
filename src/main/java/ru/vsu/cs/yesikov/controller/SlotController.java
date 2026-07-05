@@ -9,7 +9,7 @@ import ru.vsu.cs.yesikov.dto.slot.SlotResponse;
 import ru.vsu.cs.yesikov.model.enums.TrackConfigType;
 import ru.vsu.cs.yesikov.service.SlotService;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -22,8 +22,8 @@ public class SlotController {
 
     @GetMapping
     public ResponseEntity<SlotListResponse> listSlots(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime dateFrom,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime dateTo,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo,
             @RequestParam(required = false) List<TrackConfigType> trackConfig,
             @RequestParam(required = false) List<UUID> instructorId,
             @RequestParam(required = false, defaultValue = "false") Boolean onlyAvailable,

@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/slots")
+@RequestMapping("/api/slots")
 @RequiredArgsConstructor
 public class SlotController {
 

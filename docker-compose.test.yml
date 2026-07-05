@@ -9,7 +9,7 @@ services:
       DB_PORT: 5432
       DB_NAME: karting
       DB_USER: karting
-      DB_PASSWORD: change_me_please
+      DB_PASSWORD: 1111
       API_BASE_URL: http://backend:8080
     command: >
       sh -c "

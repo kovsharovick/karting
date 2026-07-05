@@ -1,3 +1,4 @@
+// ru.vsu.cs.yesikov.security.jwt.JwtAuthenticationFilter.java
 package ru.vsu.cs.yesikov.security.jwt;
 
 import jakarta.servlet.FilterChain;
@@ -7,15 +8,13 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.UUID;
 
-@Component
-@RequiredArgsConstructor
+@RequiredArgsConstructor  // убрали @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtils jwtUtils;
@@ -30,7 +29,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (jwtUtils.validateToken(token) && !jwtUtils.isTokenExpired(token)) {
                 UUID clientId = jwtUtils.extractClientId(token);
                 String phone = jwtUtils.extractPhone(token);
-                // Создаём аутентификацию без пароля
                 UsernamePasswordAuthenticationToken auth =
                         new UsernamePasswordAuthenticationToken(clientId, null, Collections.emptyList());
                 auth.setDetails(phone);

@@ -65,7 +65,7 @@ spring:
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:karting}
     username: ${DB_USER:karting}
-    password: ${DB_PASSWORD:change_me_please}
+    password: ${DB_PASSWORD:1111}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:

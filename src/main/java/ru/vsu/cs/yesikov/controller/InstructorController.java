@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/instructors")
+@RequestMapping("/api/instructors")
 @RequiredArgsConstructor
 public class InstructorController {
 

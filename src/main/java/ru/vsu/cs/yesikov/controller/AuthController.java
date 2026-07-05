@@ -13,7 +13,7 @@ import ru.vsu.cs.yesikov.service.PushService;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
 

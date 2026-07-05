@@ -13,7 +13,7 @@ import ru.vsu.cs.yesikov.service.RatingService;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/ratings")
+@RequestMapping("/api/ratings")
 @RequiredArgsConstructor
 public class RatingController {
 

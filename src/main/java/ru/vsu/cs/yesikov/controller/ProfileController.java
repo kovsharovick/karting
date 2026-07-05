@@ -14,7 +14,7 @@ import ru.vsu.cs.yesikov.service.ProfileService;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/profile")
+@RequestMapping("/api/profile")
 @RequiredArgsConstructor
 public class ProfileController {
 

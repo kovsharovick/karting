@@ -1,93 +1,224 @@
-# Summer School 2026
+# SummerSchool_2026 — «Апекс» (картинг-центр)
 
+Учебный проект: полный цикл разработки backend-части и web-прототипа клиентского приложения для картинг-центра «Апекс» — от анализа предметной области и требований до Spring Boot API, JSP-интерфейса, SQL-схемы и тестовой документации.
 
+Приложение решает проблему ручной записи на заезды (Telegram + маркерная доска): клиенты сами видят свободные слоты, бронируют место, управляют своими бронями, отменяют запись и оценивают маршалов после заезда.
 
-## Getting started
+Этот README — навигационная карта по репозиторию: что где лежит и зачем.
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+## Структура репозитория
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
-
+```text
+SummerSchool_2026/
+├── analysis/                 # Аналитика: бриф, требования, дизайн, логики и OpenAPI-контракт
+├── src/main/java/            # Backend на Java + Spring Boot: контроллеры, сервисы, DTO, модели, репозитории
+├── src/main/resources/       # Конфигурация приложения и Flyway-миграции
+├── src/main/webapp/          # JSP-страницы web-прототипа
+├── database/                 # Docker-образ БД и PostgreSQL-миграции
+├── tests/                    # Баг-репорты, тест-кейсы и промпты по тестированию
+├── docker-compose.yml        # Запуск PostgreSQL, backend и Adminer
+├── docker-compose.test.yml   # Тестовое окружение
+├── dockerfile                # Dockerfile backend-приложения
+├── pom.xml                   # Maven-конфигурация проекта
+└── README.md                 # Навигация по репозиторию
 ```
-cd existing_repo
-git remote add origin https://surfstudio.gitlab.yandexcloud.net/kruckih/summer-school-2026.git
-git branch -M main
-git push -uf origin main
+
+## analysis/ — аналитика и дизайн
+
+Последовательные этапы анализа, от брифа заказчика до готового API-контракта и логик приложения.
+
+| Папка / файл | Содержимое |
+| --- | --- |
+| `0-customer-brief/` | Исходный бриф заказчика: `brief-karting.md`. |
+| `1-elicitation/` | Сбор требований: `domain-description.md` (описание предметной области), `customer-questions.md` (вопросы заказчику). |
+| `2-requirements/` | Формальные требования: бизнес-требования, функциональные и нефункциональные требования, use-case'ы и пользовательские истории. |
+| `3-design-brief/` | UX/UI-бриф: `00-foundations.md` (принципы интерфейса), `design-brief.md` (карта экранов и сценариев). |
+| `4-design/` | Технический дизайн: `data-model.md` (модель данных), `api-sequence.md` (последовательности API-запросов). |
+| `09-logic/` | Сквозные логики: OTP-авторизация, расчёт доступности, создание брони, отмена брони, оценка маршала, push-уведомления. |
+| `screens/` | Спецификации экранов и bottom sheets: регистрация, список слотов, карточка слота, бронирование, мои брони, детали брони, фильтры, подтверждения и оценка маршала. |
+| `api/openapi.yaml` | OpenAPI-контракт клиентского API. |
+| `analysis-prompts.md` | Лог промптов, использованных при подготовке аналитики. |
+
+Если нужно быстро понять, что делает приложение → начинайте с `analysis/1-elicitation/domain-description.md`, затем переходите к `analysis/2-requirements/` и `analysis/api/openapi.yaml`.
+
+## src/main/java/ — backend-приложение
+
+Backend реализован на Java 17 + Spring Boot. В проекте есть REST API для мобильного/клиентского приложения и JSP web-прототип для ручной проверки основных пользовательских сценариев.
+
+### Основные модули
+
+```text
+src/main/java/
+├── ru/vsu/cs/yesikov/
+│   ├── KartingApplication.java        # Точка входа Spring Boot
+│   ├── config/                        # Конфигурация безопасности, MVC, кодировщика и начальных данных
+│   ├── controller/                    # REST-контроллеры клиентского API
+│   ├── dto/                           # DTO запросов и ответов API
+│   ├── exception/                     # Бизнес-исключения, обработчик ошибок, маппинг SQL-ошибок
+│   ├── model/                         # JPA-сущности и enum'ы доменной модели
+│   ├── repository/                    # Spring Data JPA репозитории
+│   ├── security/jwt/                  # JWT-фильтр, свойства и утилиты токенов
+│   ├── service/                       # Бизнес-логика авторизации, слотов, броней, профиля, оценок и push-токенов
+│   └── web/                           # MVC-контроллер и формы JSP web-прототипа
+├── Архитектурный план.md              # Архитектурные заметки по реализации
+└── Схема данных.md                    # Описание схемы данных
 ```
 
-## Integrate with your tools
+### REST API
 
-* [Set up project integrations](https://surfstudio.gitlab.yandexcloud.net/kruckih/summer-school-2026/-/settings/integrations)
+| Контроллер | Базовый путь | Назначение |
+| --- | --- | --- |
+| `AuthController` | `/api/auth` | OTP-авторизация, проверка кода, refresh/logout, регистрация и удаление push-токенов. |
+| `SlotController` | `/api/slots` | Получение списка слотов и детальной карточки слота. |
+| `BookingController` | `/api/bookings` | Создание брони, список моих броней, детали брони, отмена брони. |
+| `InstructorController` | `/api/instructors` | Список маршалов / инструкторов. |
+| `ProfileController` | `/api/profile` | Просмотр, обновление и удаление профиля, смена телефона через OTP. |
+| `RatingController` | `/api/ratings` | Создание оценки маршала и получение списка оценок. |
 
-## Collaborate with your team
+### Web-прототип на JSP
 
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+Web-прототип покрывает базовый клиентский путь:
 
-## Test and Deploy
+1. вход по телефону и OTP-коду;
+2. просмотр списка слотов;
+3. просмотр карточки слота;
+4. создание брони;
+5. экран успешного бронирования;
+6. список «Мои брони»;
+7. детали брони;
+8. отмена брони;
+9. оценка маршала.
 
-Use the built-in continuous integration in GitLab.
+JSP-страницы лежат в `src/main/webapp/WEB-INF/jsp/`:
 
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
+```text
+login.jsp
+login-code.jsp
+slot-list.jsp
+slot-card.jsp
+booking.jsp
+booking-success.jsp
+my-bookings.jsp
+booking-details.jsp
+header.jsp
+```
 
-***
+## src/main/resources/ — конфигурация и миграции
 
-# Editing this README
+| Файл / папка | Назначение |
+| --- | --- |
+| `application.yml` | Настройки Spring Boot, профили `dev` и `default`, параметры JWT, datasource, JPA и Flyway. |
+| `db/V1__init_schema.sql` | SQL-схема приложения для Flyway. |
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+По умолчанию активен профиль `dev`: приложение использует in-memory H2, создаёт схему через Hibernate и не требует отдельного PostgreSQL.
 
-## Suggestions for a good README
+Для Docker/production-подобного запуска используется профиль `default`: приложение подключается к PostgreSQL и применяет Flyway-миграции.
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+## database/ — схема БД и Docker-образ PostgreSQL
 
-## Name
-Choose a self-explaining name for your project.
+```text
+database/
+├── Dockerfile                         # Образ PostgreSQL с init-скриптом
+└── migrations/
+    └── V1__init_schema.sql            # Основная миграция схемы БД
+```
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+Основные сущности БД:
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+- `clients` — клиенты;
+- `marshals` — маршалы;
+- `track_configurations` — конфигурации трассы;
+- `slots` — заезды / слоты;
+- `bookings` — бронирования;
+- `ratings` — оценки маршалов;
+- `otp_codes` — OTP-коды;
+- `refresh_tokens` — refresh-токены;
+- `push_tokens` и `push_notification_logs` — push-инфраструктура;
+- `idempotency_keys` — защита создания брони от повторных запросов.
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+## tests/ — баги и тестовая документация
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+| Файл | Назначение |
+| --- | --- |
+| `01bug-report.md`, `02bug-report.md`, `03bag-report.md`, `04bug-report.md` | Отдельные баг-репорты по найденным дефектам. |
+| `test-case.md` | Тест-кейсы для проверки пользовательских сценариев. |
+| `tests-prompts.md` | Промпты, использованные при подготовке тестовой документации. |
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+## Файлы в корне
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+| Файл | Назначение |
+| --- | --- |
+| `pom.xml` | Maven-проект: Spring Boot 3.1.5, Java 17, Spring Web/Data JPA/Security/Validation/Actuator, PostgreSQL, H2, Flyway, JWT, Springdoc OpenAPI, Lombok, JSP/JSTL, Testcontainers. |
+| `docker-compose.yml` | Полный запуск: PostgreSQL, backend и Adminer (через профиль `tools`). |
+| `docker-compose.test.yml` | Окружение для тестового запуска. |
+| `dockerfile` | Сборка Docker-образа backend-приложения. |
+| `implementation-prompts.md` | Лог промптов, использованных при реализации. |
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+## Как запустить
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+### Вариант 1. Локально в dev-профиле (H2)
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+Нужны Java 17 и Maven.
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+```bash
+mvn spring-boot:run
+```
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+После запуска:
 
-## License
-For open source projects, say how it is licensed.
+- web-прототип: `http://localhost:8080/login`;
+- H2 Console: `http://localhost:8080/h2-console`;
+- Swagger UI: `http://localhost:8080/swagger-ui/index.html`.
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+### Вариант 2. Через Docker Compose (PostgreSQL + backend)
+
+Создайте `.env` с переменными окружения:
+
+```env
+POSTGRES_USER=karting
+POSTGRES_PASSWORD=1111
+POSTGRES_DB=karting
+POSTGRES_PORT=5432
+BACKEND_PORT=8080
+ADMINER_PORT=8081
+JWT_SECRET=very_secret_key_for_jwt_must_be_at_least_256_bits
+```
+
+Запуск backend и БД:
+
+```bash
+docker compose up --build
+```
+
+Запуск вместе с Adminer:
+
+```bash
+docker compose --profile tools up --build
+```
+
+После запуска:
+
+- backend: `http://localhost:8080`;
+- web-прототип: `http://localhost:8080/login`;
+- Swagger UI: `http://localhost:8080/swagger-ui/index.html`;
+- Adminer: `http://localhost:8081`.
+
+## Как быстро найти нужное
+
+| Хочу понять... | Смотреть в |
+| --- | --- |
+| Зачем этот проект и какая проблема решается | `analysis/1-elicitation/domain-description.md` |
+| Что просил заказчик | `analysis/0-customer-brief/brief-karting.md` |
+| Какие функции должно делать приложение | `analysis/2-requirements/functional-requirements.md` |
+| Какие бизнес-правила и ограничения есть | `analysis/2-requirements/business-requirements.md`, `analysis/2-requirements/non-functional-requirements.md` |
+| Как выглядит и работает каждый экран | `analysis/screens/SCR-*.md` |
+| Какие модальные окна / состояния есть | `analysis/screens/BS-*.md` |
+| Как работает авторизация по OTP | `analysis/09-logic/LOGIC-001-auth-otp.md`, `src/main/java/ru/vsu/cs/yesikov/service/AuthService.java` |
+| Как считается доступность слотов | `analysis/09-logic/LOGIC-002-availability-calc.md`, `src/main/java/ru/vsu/cs/yesikov/service/SlotService.java` |
+| Как создаётся и отменяется бронь | `analysis/09-logic/LOGIC-003-create-booking.md`, `analysis/09-logic/LOGIC-004-cancel-booking.md`, `src/main/java/ru/vsu/cs/yesikov/service/BookingService.java` |
+| Как устроена оценка маршала | `analysis/09-logic/LOGIC-005-marshal-rating.md`, `src/main/java/ru/vsu/cs/yesikov/service/RatingService.java` |
+| Контракт API | `analysis/api/openapi.yaml` или Swagger UI после запуска приложения |
+| REST-контроллеры | `src/main/java/ru/vsu/cs/yesikov/controller/` |
+| Web-интерфейс | `src/main/java/ru/vsu/cs/yesikov/web/WebController.java`, `src/main/webapp/WEB-INF/jsp/` |
+| Схему базы данных | `src/main/resources/db/V1__init_schema.sql`, `database/migrations/V1__init_schema.sql` |
+| Найденные баги и тест-кейсы | `tests/` |
